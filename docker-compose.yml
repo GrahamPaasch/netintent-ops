@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: netintent
+      POSTGRES_USER: netintent
+      POSTGRES_PASSWORD: netintent
+    volumes:
+      - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U netintent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://netintent:netintent@postgres:5432/netintent
+      RUNNER_PRIVATE_DATA_DIR: /app/.runner
+      RUNNER_PROJECT_DIR: /app/ansible
+      RUNNER_CONTAINER_ENGINE: docker
+      RUNNER_EE_IMAGE: netintent-ops-ee:latest
+      ARTIFACTS_DIR: /app/artifacts
+      VAULT_ADDR: http://vault:8200
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - artifacts:/app/artifacts
+    restart: unless-stopped
+  worker:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.worker
+    environment:
+      DATABASE_URL: postgresql+psycopg2://netintent:netintent@postgres:5432/netintent
+      RUNNER_PRIVATE_DATA_DIR: /app/.runner
+      RUNNER_PROJECT_DIR: /app/ansible
+      RUNNER_CONTAINER_ENGINE: docker
+      RUNNER_EE_IMAGE: netintent-ops-ee:latest
+      ARTIFACTS_DIR: /app/artifacts
+      POLL_INTERVAL: "5"
+      VAULT_ADDR: http://vault:8200
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - artifacts:/app/artifacts
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  artifacts:

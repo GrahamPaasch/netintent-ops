@@ -1,0 +1,7 @@
+skip_list:
+  - args[module]
+mock_modules:
+  - community.hashi_vault.vault_kv2_get
+kinds:
+  - path: infra/ansible-builder/execution-environment.yml
+    kind: vars

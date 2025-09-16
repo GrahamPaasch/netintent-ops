@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update     && apt-get install --no-install-recommends -y build-essential libpq-dev git     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY . /app
+
+RUN pip install --upgrade pip     && pip install .
+
+RUN useradd -ms /bin/bash netintent     && chown -R netintent:netintent /app
+
+USER netintent
+
+ENV PYTHONPATH=/app
+ENV ARTIFACTS_DIR=/app/artifacts
+ENV RUNNER_PRIVATE_DATA_DIR=/app/ansible
+ENV RUNNER_EE_IMAGE=netintent-ops-ee:latest
+ENV RUNNER_CONTAINER_ENGINE=docker
+
+EXPOSE 8000
+
+CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]

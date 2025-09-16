@@ -1,0 +1,127 @@
+stages:
+  - lint
+  - molecule
+  - plan
+  - review
+  - apply
+  - post-validate
+  - pages
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  EE_IMAGE: "$CI_REGISTRY_IMAGE/ee:latest"
+  ARTIFACTS_DIR: "$CI_PROJECT_DIR/artifacts"
+
+.default-job:
+  image: python:3.11-slim
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install .[dev]
+
+lint:
+  extends: .default-job
+  stage: lint
+  script:
+    - pre-commit run --all-files
+
+molecule:
+  extends: .default-job
+  stage: molecule
+  script:
+    - pip install ansible ansible-lint molecule molecule-plugins[docker]
+    - molecule test -s base
+
+build-ee:
+  stage: plan
+  image: quay.io/ansible/ansible-builder:latest
+  script:
+    - ansible-builder build -v 3 -t "$EE_IMAGE" -f infra/ansible-builder/execution-environment.yml
+  artifacts:
+    paths:
+      - context
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+plan:
+  stage: plan
+  image: quay.io/ansible/ansible-runner:stable-2.14-latest
+  needs:
+    - build-ee
+  script:
+    - ansible-galaxy collection install -r ansible/collections/requirements.yml
+    - mkdir -p .runner
+    - >
+      ansible-runner run .runner \
+      --project-dir ansible \
+      --playbook playbooks/plan.yml \
+      --inventory ansible/inventories/lab/hosts.yml \
+      --cmdline "--check --diff" \
+      --process-isolation \
+      --container-image "$EE_IMAGE"
+  artifacts:
+    when: always
+    paths:
+      - artifacts/
+      - ansible/artifacts/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+review:
+  stage: review
+  when: manual
+  script:
+    - echo "Manual approval required before apply"
+  needs:
+    - plan
+  allow_failure: false
+
+apply:
+  stage: apply
+  image: quay.io/ansible/ansible-runner:stable-2.14-latest
+  needs:
+    - review
+  script:
+    - ansible-galaxy collection install -r ansible/collections/requirements.yml
+    - mkdir -p .runner
+    - >
+      ansible-runner run .runner \
+      --project-dir ansible \
+      --playbook playbooks/apply.yml \
+      --inventory ansible/inventories/lab/hosts.yml \
+      --process-isolation \
+      --container-image "$EE_IMAGE"
+  when: manual
+  only:
+    - main
+
+post-validate:
+  stage: post-validate
+  image: quay.io/ansible/ansible-runner:stable-2.14-latest
+  needs:
+    - apply
+  script:
+    - ansible-galaxy collection install -r ansible/collections/requirements.yml
+    - mkdir -p .runner
+    - >
+      ansible-runner run .runner \
+      --project-dir ansible \
+      --playbook playbooks/validate.yml \
+      --inventory ansible/inventories/lab/hosts.yml \
+      --process-isolation \
+      --container-image "$EE_IMAGE"
+  when: on_success
+  only:
+    - main
+
+pages:
+  stage: pages
+  image: python:3.11-slim
+  script:
+    - mkdir -p public
+    - cp docs/intent_examples.md public/index.md
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

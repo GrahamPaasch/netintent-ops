@@ -1,0 +1,34 @@
+---
+- name: NetIntent plan (check + diff)
+  hosts: all
+  gather_facts: false
+  vars:
+    docs_template: ../templates/intent.md.j2
+    plan_control_host: "{{ ansible_play_hosts_all | first }}"
+  tasks:
+    - name: Ensure artifact directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0750"
+      loop:
+        - "{{ netintent_artifacts_dir }}"
+        - "{{ netintent_render_dir }}"
+        - "{{ netintent_docs_dir }}"
+        - "{{ netintent_evidence_dir }}"
+      delegate_to: localhost
+      when: inventory_hostname == plan_control_host
+
+    - name: Include base configuration role
+      ansible.builtin.include_role:
+        name: base
+
+    - name: Generate intent documentation from payload
+      ansible.builtin.template:
+        src: "{{ docs_template }}"
+        dest: "{{ netintent_docs_dir }}/intent.md"
+        mode: "0640"
+      vars:
+        intent_payload: "{{ netintent_intent }}"
+      delegate_to: localhost
+      when: inventory_hostname == plan_control_host

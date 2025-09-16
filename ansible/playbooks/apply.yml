@@ -1,0 +1,23 @@
+---
+- name: NetIntent apply run
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Include base configuration role
+      ansible.builtin.include_role:
+        name: base
+
+    - name: Capture post-change evidence
+      ansible.builtin.command: "uptime"
+      register: apply_evidence
+      changed_when: false
+
+    - name: Persist post-change evidence
+      ansible.builtin.copy:
+        dest: "{{ netintent_evidence_dir }}/{{ inventory_hostname }}-post.txt"
+        mode: "0640"
+        content: |-
+          command: {{ apply_evidence.cmd }}
+          stdout: {{ apply_evidence.stdout }}
+          stderr: {{ apply_evidence.stderr }}
+      delegate_to: localhost

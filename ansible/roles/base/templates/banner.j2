@@ -1,0 +1,11 @@
+{{ '-' * 72 }}
+{{ org_name }}
+Authorized access only. Monitoring active.
+Timezone: {{ base_timezone }}
+NTP Servers:
+{% for ntp in base_ntp_servers %}- {{ ntp }}
+{% endfor %}Syslog Targets:
+{% for target in base_syslog_targets %}- {{ target.host }}:{{ target.port }} ({{ target.transport }})
+{% endfor %}
+{{ vault_footer }}
+{{ '-' * 72 }}

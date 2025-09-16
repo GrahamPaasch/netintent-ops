@@ -1,0 +1,39 @@
+---
+- name: Optionally fetch secrets from Vault for demo purposes
+  community.hashi_vault.vault_kv2_get:
+    mount_point: secret
+    path: network/common
+    auth_method: token
+  register: base_vault_demo
+  when: netintent_enable_vault_demo | default(false)
+
+- name: Render device banner preview
+  ansible.builtin.template:
+    src: "{{ base_banner_template }}"
+    dest: "{{ netintent_render_dir }}/{{ inventory_hostname }}.{{ base_render_extension }}"
+    mode: "0640"
+  vars:
+    vault_footer: "{{ base_vault_demo.value.banner_footer if (base_vault_demo is defined and base_vault_demo.value is defined) else base_banner_footer }}"
+  delegate_to: localhost
+
+- name: Capture simulated pre-change evidence
+  ansible.builtin.command: "date"
+  register: base_prechange
+  changed_when: false
+
+- name: Persist evidence to artifact store
+  ansible.builtin.copy:
+    dest: "{{ netintent_evidence_dir }}/{{ inventory_hostname }}-pre.txt"
+    mode: "0640"
+    content: |-
+      command: {{ base_prechange.cmd }}
+      stdout: {{ base_prechange.stdout }}
+      stderr: {{ base_prechange.stderr }}
+  delegate_to: localhost
+
+- name: Display targeted configuration summary
+  ansible.builtin.debug:
+    msg:
+      - "Device role: {{ hostvars[inventory_hostname].device_role | default('unknown') }}"
+      - "Loopback: {{ hostvars[inventory_hostname].loopback_ip | default('n/a') }}"
+      - "Rendered file: {{ netintent_render_dir }}/{{ inventory_hostname }}.{{ base_render_extension }}"

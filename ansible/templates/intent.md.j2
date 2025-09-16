@@ -1,0 +1,10 @@
+# Intent Documentation
+
+## Metadata
+- Run mode: {{ netintent_run_mode | default('plan') }}
+- Generated on: {{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}
+
+## Variables
+```yaml
+{{ intent_payload | to_nice_yaml(indent=2) }}
+```

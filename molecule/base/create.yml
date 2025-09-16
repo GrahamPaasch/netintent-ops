@@ -1,0 +1,16 @@
+---
+- name: Create local molecule instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Write instance configuration for delegated driver
+      ansible.builtin.copy:
+        dest: "{{ molecule_instance_config }}"
+        content: |
+          instance:
+            address: localhost
+            user: root
+            port: 22
+            ansible_connection: local
+        mode: "0600"

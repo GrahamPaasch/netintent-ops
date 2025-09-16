@@ -1,0 +1,15 @@
+{
+  "intent": {
+    "fabric": {
+      "name": "lab-fabric",
+      "vlans": [
+        {"id": 10, "name": "lab-users"},
+        {"id": 20, "name": "lab-servers"}
+      ]
+    }
+  },
+  "intent_format": "json",
+  "environment": "lab",
+  "template_set": "base",
+  "enable_vault": false
+}

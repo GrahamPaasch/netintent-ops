@@ -1,0 +1,3 @@
+---
+base_render_extension: cfg
+base_banner_template: banner.j2

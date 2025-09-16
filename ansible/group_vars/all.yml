@@ -1,0 +1,24 @@
+---
+org_name: NetIntent Labs
+base_ntp_servers:
+  - 192.0.2.10
+  - 192.0.2.11
+base_syslog_targets:
+  - host: log01.example.com
+    port: 514
+    transport: udp
+  - host: log02.example.com
+    port: 6514
+    transport: tcp
+base_login_banner: |
+  NetIntent Managed Device
+  Unauthorized access prohibited.
+base_banner_footer: >-
+  Contact NetIntent NOC
+  All activity monitored.
+base_enable_vault_demo: false
+base_interfaces:
+  mgmt0:
+    description: NetIntent management interface
+    mtu: 9000
+base_timezone: UTC

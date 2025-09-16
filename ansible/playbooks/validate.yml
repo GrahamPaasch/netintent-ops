@@ -1,0 +1,16 @@
+---
+- name: Post-change validation checks
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Assert rendered template exists
+      ansible.builtin.stat:
+        path: "{{ netintent_render_dir }}/{{ inventory_hostname }}.{{ base_render_extension | default('cfg') }}"
+      register: rendered
+      delegate_to: localhost
+
+    - name: Fail when rendered template missing
+      ansible.builtin.fail:
+        msg: "Rendered template missing for {{ inventory_hostname }}"
+      when: not rendered.stat.exists
+      delegate_to: localhost

@@ -1,0 +1,5 @@
+---
+loopback_ip: 10.0.0.2/32
+vlan_access_ports:
+  - id: 20
+    name: lab-servers

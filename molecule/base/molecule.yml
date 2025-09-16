@@ -1,0 +1,31 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: default
+
+ansible:
+  cfg:
+    defaults:
+      host_key_checking: false
+  env:
+    ANSIBLE_FORCE_COLOR: "1"
+    ANSIBLE_ROLES_PATH: ../../ansible/roles
+    ANSIBLE_COLLECTIONS_PATHS: ../../ansible/collections
+  playbooks:
+    create: create.yml
+    converge: converge.yml
+    destroy: destroy.yml
+    verify: verify.yml
+
+scenario:
+  name: base
+  test_sequence:
+    - dependency
+    - create
+    - converge
+    - verify
+    - destroy

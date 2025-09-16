@@ -1,0 +1,5 @@
+---
+loopback_ip: 10.0.0.1/32
+vlan_access_ports:
+  - id: 10
+    name: lab-users

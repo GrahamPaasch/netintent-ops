@@ -1,0 +1,29 @@
+---
+- name: Converge
+  hosts: localhost
+  gather_facts: false
+  vars:
+    netintent_render_dir: /tmp/molecule/rendered
+    netintent_evidence_dir: /tmp/molecule/evidence
+    netintent_docs_dir: /tmp/molecule/docs
+    netintent_artifacts_dir: /tmp/molecule/artifacts
+    netintent_intent: {}
+  vars_files:
+    - ../../ansible/group_vars/all.yml
+    - ../../ansible/group_vars/lab.yml
+  tasks:
+    - name: Ensure molecule artifact directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ netintent_render_dir }}"
+        - "{{ netintent_evidence_dir }}"
+        - "{{ netintent_docs_dir }}"
+        - "{{ netintent_artifacts_dir }}"
+      delegate_to: localhost
+
+    - name: Include base role
+      ansible.builtin.include_role:
+        name: base

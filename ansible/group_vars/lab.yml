@@ -1,0 +1,5 @@
+---
+base_ntp_servers:
+  - 192.0.2.20
+  - 192.0.2.21
+lab_site_code: LAB

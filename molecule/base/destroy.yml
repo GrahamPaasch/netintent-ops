@@ -1,0 +1,10 @@
+---
+- name: Destroy local molecule instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Remove instance configuration file
+      ansible.builtin.file:
+        path: "{{ molecule_instance_config }}"
+        state: absent

@@ -1,0 +1,19 @@
+---
+- name: Verify
+  hosts: localhost
+  gather_facts: false
+  vars:
+    netintent_render_dir: /tmp/molecule/rendered
+    base_render_extension: cfg
+  tasks:
+    - name: Check rendered file exists
+      ansible.builtin.stat:
+        path: "{{ netintent_render_dir }}/localhost.{{ base_render_extension }}"
+      register: render_stat
+      delegate_to: localhost
+
+    - name: Assert render file present
+      ansible.builtin.assert:
+        that:
+          - render_stat.stat.exists | bool
+        fail_msg: "Rendered configuration missing"
